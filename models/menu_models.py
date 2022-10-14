@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Date
 
-from db_util import Base, Session
+from models.db_util import Base, Session
 
-sess = Session()
+Dbsession = Session()
 
 
 class Category(Base):
@@ -35,6 +35,7 @@ class DailyMenu(Base):
     __tablename__ = 'dailyMenu'
     id = Column(Integer, primary_key=True)
     dishes_id = Column(Integer, ForeignKey('dishes.id'))
+    stapleFood_id = Column(Integer, ForeignKey('category.id'))
     create_date = Column(Date)
 
     def __repr__(self):
@@ -43,5 +44,3 @@ class DailyMenu(Base):
             'dishes_id': self.dishes_id,
             'date': self.create_date
         })
-
-
