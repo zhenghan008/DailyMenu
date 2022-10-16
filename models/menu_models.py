@@ -35,7 +35,6 @@ class DailyMenu(Base):
     __tablename__ = 'dailyMenu'
     id = Column(Integer, primary_key=True)
     dishes_id = Column(Integer, ForeignKey('dishes.id'))
-    stapleFood_id = Column(Integer, ForeignKey('category.id'))
     create_date = Column(Date)
 
     def __repr__(self):
