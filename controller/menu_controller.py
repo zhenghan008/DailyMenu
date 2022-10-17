@@ -7,6 +7,7 @@ class MenuController:
 
     def __init__(self, day=4):
         self.now = datetime.datetime.now()
+        self.tomorrow = (self.now + datetime.timedelta(days=1)).date()
         self.days = [(self.now - datetime.timedelta(days=i)).date() for i in range(1, day + 1)]
         self.days.append(self.now.date())
 
@@ -58,8 +59,8 @@ class MenuController:
                             Dbsession.query(Category.id).filter(Category.id.notin_((1, 2, 6))).all()]
             category_dishes_map = {each: {i[0] for i in someDaysAgo_menus if i[-1] == each} for each in cate_ids}
             chosen_menu = self.get_chosen_menu(category_dishes_map, staple_food_id)
-            add_objs = [DailyMenu(dishes_id=each[-1][-1], create_date=self.now.date()) for each in chosen_menu]
-            del_res = Dbsession.query(DailyMenu.id).filter(DailyMenu.create_date == self.now.date()).all()
+            add_objs = [DailyMenu(dishes_id=each[-1][-1], create_date=self.tomorrow) for each in chosen_menu]
+            del_res = Dbsession.query(DailyMenu.id).filter(DailyMenu.create_date == self.tomorrow).all()
             if del_res:
                 delete_stmt = DailyMenu.__table__.delete().where(DailyMenu.id.in_(tuple([i[0] for i in del_res])))
                 Dbsession.execute(delete_stmt)

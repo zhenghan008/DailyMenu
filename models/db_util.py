@@ -6,7 +6,7 @@ import os
 work_path = os.path.abspath(os.path.dirname(__file__)).replace("\\models", "")
 
 Base = declarative_base()
-engine = create_engine(f'sqlite:///{work_path}/database/menu_dev20221014.db', echo=False)
+engine = create_engine(f'sqlite:///{work_path}/database/menu.db', echo=False)
 
 Session = sessionmaker(bind=engine)
 
