@@ -6,7 +6,9 @@ import datetime
 class MenuController:
 
     def __init__(self, day=4):
-        self.days = [(datetime.datetime.now() - datetime.timedelta(days=i)).date() for i in range(1, day + 1)]
+        self.now = datetime.datetime.now()
+        self.days = [(self.now - datetime.timedelta(days=i)).date() for i in range(1, day + 1)]
+        self.days.append(self.now.date())
 
     # 获取指定前几天的菜单
     def get_someDaysAgo_menu_ids(self):
@@ -45,16 +47,31 @@ class MenuController:
             result.append(random.choice(optional_list))
         return result
 
-    def gen_menu(self, staple_food_id=1):
+    def gen_menu(self, staple_food_id=2):
         cate_ids = []
-        someDaysAgo_menus = self.get_someDaysAgo_menu_ids()
-        if staple_food_id == 1:
-            cate_ids = [res[0] for res in Dbsession.query(Category.id).filter(Category.id.notin_((1, 2))).all()]
-        elif staple_food_id == 2:
-            cate_ids = [res[0] for res in
-                        Dbsession.query(Category.id).filter(Category.id.notin_((1, 2, 6))).all()]
-        category_dishes_map = {each: {i[0] for i in someDaysAgo_menus if i[-1] == each} for each in cate_ids}
-        return self.get_chosen_menu(category_dishes_map, staple_food_id)
+        try:
+            someDaysAgo_menus = self.get_someDaysAgo_menu_ids()
+            if staple_food_id == 1:
+                cate_ids = [res[0] for res in Dbsession.query(Category.id).filter(Category.id.notin_((1, 2))).all()]
+            elif staple_food_id == 2:
+                cate_ids = [res[0] for res in
+                            Dbsession.query(Category.id).filter(Category.id.notin_((1, 2, 6))).all()]
+            category_dishes_map = {each: {i[0] for i in someDaysAgo_menus if i[-1] == each} for each in cate_ids}
+            chosen_menu = self.get_chosen_menu(category_dishes_map, staple_food_id)
+            add_objs = [DailyMenu(dishes_id=each[-1][-1], create_date=self.now.date()) for each in chosen_menu]
+            del_res = Dbsession.query(DailyMenu.id).filter(DailyMenu.create_date == self.now.date()).all()
+            if del_res:
+                delete_stmt = DailyMenu.__table__.delete().where(DailyMenu.id.in_(tuple([i[0] for i in del_res])))
+                Dbsession.execute(delete_stmt)
+            Dbsession.bulk_save_objects(add_objs)
+        except Exception as e:
+            Dbsession.rollback()
+            print(f"ERROR: {str(e)}")
+        else:
+            Dbsession.commit()
+            return chosen_menu
+        finally:
+            Dbsession.close()
 
 
 if __name__ == '__main__':

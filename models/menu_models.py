@@ -7,7 +7,7 @@ Dbsession = Session()
 
 class Category(Base):
     __tablename__ = 'category'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
 
     def __repr__(self):
@@ -19,7 +19,7 @@ class Category(Base):
 
 class Dishes(Base):
     __tablename__ = 'dishes'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True)
     category_id = Column(Integer, ForeignKey('category.id'))
 
@@ -33,7 +33,7 @@ class Dishes(Base):
 
 class DailyMenu(Base):
     __tablename__ = 'dailyMenu'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     dishes_id = Column(Integer, ForeignKey('dishes.id'))
     create_date = Column(Date)
 
