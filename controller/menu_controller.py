@@ -5,7 +5,9 @@ import datetime
 
 class MenuController:
 
-    def __init__(self, day=4):
+    def __init__(self, day=4, dishes_num=2, staple_food_id=1):
+        self.dishes_num = dishes_num
+        self.staple_food_id = staple_food_id
         self.now = datetime.datetime.now()
         self.tomorrow = (self.now + datetime.timedelta(days=1)).date()
         self.days = [(self.now - datetime.timedelta(days=i)).date() for i in range(1, day + 1)]
@@ -18,18 +20,17 @@ class MenuController:
             DailyMenu.create_date.between(self.days[-1], self.days[0])).all()
         return res
 
-    @staticmethod
-    def get_chosen_menu(category_dishes_map, staple_food_id, dishes_num=2):
+    def get_chosen_menu(self, category_dishes_map):
         result = []
-        optional_category_ids = [i for i in tuple(category_dishes_map.keys()) if i != 6]
+        optional_category_ids = [i for i in tuple(category_dishes_map.keys()) if i != 5]
         while 1:
             chosen_category = random.choices(optional_category_ids,
                                              weights=[1 for _ in range(len(optional_category_ids))],
-                                             k=dishes_num)
-            if len(set(chosen_category)) == dishes_num:
+                                             k=self.dishes_num)
+            if len(set(chosen_category)) == self.dishes_num:
                 break
-        if staple_food_id == 1:
-            chosen_category.append(6)
+        if self.staple_food_id == 1:
+            chosen_category.append(5)
         # print(f"chosen_category {chosen_category}")
         not_choice_ids = [each for i in chosen_category for each in category_dishes_map[i]]
         if not_choice_ids:
@@ -48,17 +49,19 @@ class MenuController:
             result.append(random.choice(optional_list))
         return result
 
-    def gen_menu(self, staple_food_id=2):
+    def gen_menu(self):
         cate_ids = []
         try:
             someDaysAgo_menus = self.get_someDaysAgo_menu_ids()
-            if staple_food_id == 1:
-                cate_ids = [res[0] for res in Dbsession.query(Category.id).filter(Category.id.notin_((1, 2))).all()]
-            elif staple_food_id == 2:
+            if self.staple_food_id == 1:
+                cate_ids = [res[0] for res in Dbsession.query(Category.id).filter(Category.id.notin_((1,))).all()]
+            elif self.staple_food_id == 2:
                 cate_ids = [res[0] for res in
-                            Dbsession.query(Category.id).filter(Category.id.notin_((1, 2, 6))).all()]
+                            Dbsession.query(Category.id).filter(Category.id.notin_((1, 5))).all()]
             category_dishes_map = {each: {i[0] for i in someDaysAgo_menus if i[-1] == each} for each in cate_ids}
-            chosen_menu = self.get_chosen_menu(category_dishes_map, staple_food_id)
+            # print(category_dishes_map)
+            chosen_menu = self.get_chosen_menu(category_dishes_map)
+            # print(chosen_menu)
             add_objs = [DailyMenu(dishes_id=each[-1][-1], create_date=self.tomorrow) for each in chosen_menu]
             del_res = Dbsession.query(DailyMenu.id).filter(DailyMenu.create_date == self.tomorrow).all()
             if del_res:
@@ -67,10 +70,10 @@ class MenuController:
             Dbsession.bulk_save_objects(add_objs)
         except Exception as e:
             Dbsession.rollback()
-            print(f"ERROR: {str(e)}")
+            return 0, f"GEN ERROR: {str(e)}"
         else:
             Dbsession.commit()
-            return chosen_menu
+            return 1, f"GEN SUCCESS!result:{chosen_menu}"
         finally:
             Dbsession.close()
 
